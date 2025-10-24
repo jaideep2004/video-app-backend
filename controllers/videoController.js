@@ -19,12 +19,12 @@ export const uploadVideo = async (req, res) => {
     // Use uploaded thumbnail file if provided, otherwise generate one
     if (req.files.thumbnail) {
       const thumbnailFile = req.files.thumbnail[0];
-      thumbnailUrl = `http://localhost:5000/uploads/thumbnails/${thumbnailFile.filename}`;
+      thumbnailUrl = `https://video-backend.cloud/uploads/thumbnails/${thumbnailFile.filename}`;
     } else if (req.body.thumbnailUrl) {
       thumbnailUrl = req.body.thumbnailUrl;
     } else {
       const thumbnailPath = path.join('uploads/thumbnails', `${path.parse(videoFile.filename).name}.png`);
-      thumbnailUrl = `http://localhost:5000/uploads/thumbnails/${path.parse(videoFile.filename).name}.png`;
+      thumbnailUrl = `https://video-backend.cloud/uploads/thumbnails/${path.parse(videoFile.filename).name}.png`;
       // Generate thumbnail
       await generateThumbnail(videoPath, thumbnailPath);
     }
@@ -47,7 +47,7 @@ export const uploadVideo = async (req, res) => {
       categories: categories, // Store as array
       duration: metadata.duration,
       resolution: metadata.resolution,
-      fileUrl: `http://localhost:5000/uploads/videos/${videoFile.filename}`,
+      fileUrl: `https://video-backend.cloud/uploads/videos/${videoFile.filename}`,
       thumbnailUrl: thumbnailUrl,
       uploadedBy: req.user.username,
       customUploadDate: req.body.customUploadDate ? new Date(req.body.customUploadDate) : new Date(),

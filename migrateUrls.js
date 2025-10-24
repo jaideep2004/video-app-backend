@@ -24,13 +24,13 @@ const migrateUrls = async () => {
       
       // Update fileUrl if it's relative
       if (video.fileUrl.startsWith('/uploads/videos/')) {
-        video.fileUrl = `http://localhost:5000${video.fileUrl}`;
+        video.fileUrl = `https://video-backend.cloud${video.fileUrl}`;
         updated = true;
       }
       
       // Update thumbnailUrl if it's relative
       if (video.thumbnailUrl.startsWith('/uploads/thumbnails/')) {
-        video.thumbnailUrl = `http://localhost:5000${video.thumbnailUrl}`;
+        video.thumbnailUrl = `https://video-backend.cloud${video.thumbnailUrl}`;
         updated = true;
       }
       
