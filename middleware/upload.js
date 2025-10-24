@@ -8,17 +8,16 @@ const uploadsDir = 'uploads';
 const videosDir = path.join(uploadsDir, 'videos');
 const thumbnailsDir = path.join(uploadsDir, 'thumbnails');
 
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
-}
+// Create directories if they don't exist
+const createDirIfNotExists = (dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+};
 
-if (!fs.existsSync(videosDir)) {
-  fs.mkdirSync(videosDir);
-}
-
-if (!fs.existsSync(thumbnailsDir)) {
-  fs.mkdirSync(thumbnailsDir);
-}
+createDirIfNotExists(uploadsDir);
+createDirIfNotExists(videosDir);
+createDirIfNotExists(thumbnailsDir);
 
 // Configure storage
 const storage = multer.diskStorage({
@@ -46,6 +45,22 @@ const fileFilter = (req, file, cb) => {
   } else {
     cb(new Error('Only video and image files are allowed!'), false);
   }
+};
+
+// Error handling middleware for multer
+export const handleMulterError = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ message: 'File size too large. Maximum allowed size is 100MB.' });
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({ message: 'Too many files uploaded.' });
+    }
+    return res.status(400).json({ message: `Multer error: ${err.message}` });
+  } else if (err) {
+    return res.status(400).json({ message: err.message });
+  }
+  next();
 };
 
 export const upload = multer({ 

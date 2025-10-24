@@ -9,7 +9,7 @@ import {
   searchVideos,
   updateVideo
 } from '../controllers/videoController.js';
-import { upload } from '../middleware/upload.js';
+import { upload, handleMulterError } from '../middleware/upload.js';
 import { authenticate, authorizeAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -22,7 +22,7 @@ router.patch('/:id/view', incrementViewCount);
 router.patch('/:id/like', likeVideo);
 
 // Protected routes (admin only)
-router.post('/upload', authenticate, authorizeAdmin, upload.fields([{ name: 'video' }, { name: 'thumbnail' }]), uploadVideo);
+router.post('/upload', authenticate, authorizeAdmin, upload.fields([{ name: 'video' }, { name: 'thumbnail' }]), handleMulterError, uploadVideo);
 router.put('/:id', authenticate, authorizeAdmin, updateVideo);
 router.delete('/:id', authenticate, authorizeAdmin, deleteVideo);
 

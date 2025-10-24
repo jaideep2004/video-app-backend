@@ -23,14 +23,37 @@ export const uploadVideo = async (req, res) => {
     } else if (req.body.thumbnailUrl) {
       thumbnailUrl = req.body.thumbnailUrl;
     } else {
-      const thumbnailPath = path.join('uploads/thumbnails', `${path.parse(videoFile.filename).name}.png`);
+      // Ensure the thumbnails directory exists
+      const thumbnailsDir = path.join('uploads', 'thumbnails');
+      if (!fs.existsSync(thumbnailsDir)) {
+        fs.mkdirSync(thumbnailsDir, { recursive: true });
+      }
+      
+      const thumbnailPath = path.join(thumbnailsDir, `${path.parse(videoFile.filename).name}.png`);
       thumbnailUrl = `https://video-backend.cloud/uploads/thumbnails/${path.parse(videoFile.filename).name}.png`;
       // Generate thumbnail
-      await generateThumbnail(videoPath, thumbnailPath);
+      try {
+        await generateThumbnail(videoPath, thumbnailPath);
+      } catch (thumbError) {
+        console.error('Thumbnail generation error:', thumbError);
+        // If thumbnail generation fails, use a default thumbnail URL
+        thumbnailUrl = `https://video-backend.cloud/uploads/thumbnails/default.png`;
+      }
     }
 
     // Get video metadata
-    const metadata = await getVideoMetadata(videoPath);
+    let metadata;
+    try {
+      metadata = await getVideoMetadata(videoPath);
+    } catch (metadataError) {
+      console.error('Metadata extraction error:', metadataError);
+      // If metadata extraction fails, use default values
+      metadata = {
+        title: req.body.title || path.parse(videoFile.originalname).name,
+        duration: 0,
+        resolution: 'N/A'
+      };
+    }
 
     // Process categories
     let categories = [];
@@ -62,6 +85,21 @@ export const uploadVideo = async (req, res) => {
     });
   } catch (error) {
     console.error('Upload error:', error);
+    // Clean up uploaded files if upload fails
+    if (req.files) {
+      if (req.files.video) {
+        const videoPath = req.files.video[0].path;
+        if (fs.existsSync(videoPath)) {
+          fs.unlinkSync(videoPath);
+        }
+      }
+      if (req.files.thumbnail) {
+        const thumbnailPath = req.files.thumbnail[0].path;
+        if (fs.existsSync(thumbnailPath)) {
+          fs.unlinkSync(thumbnailPath);
+        }
+      }
+    }
     res.status(500).json({ message: 'Error uploading video', error: error.message });
   }
 };
