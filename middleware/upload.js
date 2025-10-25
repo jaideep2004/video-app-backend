@@ -38,6 +38,7 @@ const storage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
+  // Accept video files including MKV
   if (file.mimetype.startsWith('video/')) {
     cb(null, true);
   } else if (file.mimetype.startsWith('image/')) {
@@ -51,7 +52,7 @@ const fileFilter = (req, file, cb) => {
 export const handleMulterError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ message: 'File size too large. Maximum allowed size is 100MB.' });
+      return res.status(400).json({ message: 'File size too large. Maximum allowed size is 5GB.' });
     }
     if (err.code === 'LIMIT_FILE_COUNT') {
       return res.status(400).json({ message: 'Too many files uploaded.' });
@@ -67,6 +68,6 @@ export const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 100 * 1024 * 1024 // 100MB limit
+    fileSize: 5 * 1024 * 1024 * 1024 // 5GB limit
   }
 });

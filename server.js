@@ -31,7 +31,8 @@ createDirIfNotExists(thumbnailsDir);
 const corsOptions = {
   origin: [
     "http://localhost:5173",
-    "https://video-backend.cloud"
+    "https://video-backend.cloud",
+    "https://videomaxplay.com"
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -47,8 +48,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '5gb' }));
+app.use(express.urlencoded({ limit: '5gb', extended: true }));
 app.use("/uploads", express.static("uploads"));
 
 // Routes
@@ -78,7 +79,7 @@ app.use((err, req, res, next) => {
   // Handle multer errors specifically
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ message: 'File size too large. Maximum allowed size is 100MB.' });
+      return res.status(400).json({ message: 'File size too large. Maximum allowed size is 5GB.' });
     }
     return res.status(400).json({ message: `Upload error: ${err.message}` });
   }
