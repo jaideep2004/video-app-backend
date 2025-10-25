@@ -57,7 +57,7 @@ app.use("/api/videos", videoRoutes);
 app.use("/api/auth", authRoutes);
 
 app.get("/", (req, res) => {
-  res.json({ message: "Video Platform API updated 24 oct" });
+  res.json({ message: "Video Platform API updated 25 oct" });
 });
 
 // Connect to MongoDB
