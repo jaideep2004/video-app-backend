@@ -23,7 +23,7 @@ router.patch('/:id/like', likeVideo);
 
 // Protected routes (admin only)
 router.post('/upload', authenticate, authorizeAdmin, upload.fields([{ name: 'video' }, { name: 'thumbnail' }]), handleMulterError, uploadVideo);
-router.put('/:id', authenticate, authorizeAdmin, updateVideo);
+router.put('/:id', authenticate, authorizeAdmin, upload.single('thumbnail'), handleMulterError, updateVideo);
 router.delete('/:id', authenticate, authorizeAdmin, deleteVideo);
 
 export default router;

@@ -139,16 +139,31 @@ export const deleteVideo = async (req, res) => {
     }
     
     // Delete video file and thumbnail
-    const videoPath = path.join('uploads/videos', path.basename(video.fileUrl));
-    const thumbnailPath = path.join('uploads/thumbnails', path.basename(video.thumbnailUrl));
+    const videoPath = path.join(process.cwd(), 'uploads/videos', path.basename(video.fileUrl));
+    const thumbnailPath = path.join(process.cwd(), 'uploads/thumbnails', path.basename(video.thumbnailUrl));
     
+    // Delete video file if it exists
     if (fs.existsSync(videoPath)) {
-      fs.unlinkSync(videoPath);
+      try {
+        fs.unlinkSync(videoPath);
+        console.log(`Deleted video file: ${videoPath}`);
+      } catch (err) {
+        console.error(`Error deleting video file: ${videoPath}`, err);
+      }
+    } else {
+      console.log(`Video file not found: ${videoPath}`);
     }
     
-    // Only delete thumbnail if it's a local file (not a custom URL)
-    if (fs.existsSync(thumbnailPath) && video.thumbnailUrl.includes('uploads/thumbnails')) {
-      fs.unlinkSync(thumbnailPath);
+    // Delete thumbnail file if it exists and is a local file
+    if (fs.existsSync(thumbnailPath) && !video.thumbnailUrl.startsWith('http')) {
+      try {
+        fs.unlinkSync(thumbnailPath);
+        console.log(`Deleted thumbnail file: ${thumbnailPath}`);
+      } catch (err) {
+        console.error(`Error deleting thumbnail file: ${thumbnailPath}`, err);
+      }
+    } else {
+      console.log(`Thumbnail file not found or is external: ${thumbnailPath}`);
     }
     
     // Delete from database
@@ -216,17 +231,39 @@ export const searchVideos = async (req, res) => {
 // Update video by ID
 export const updateVideo = async (req, res) => {
   try {
-    const { title, description, customUploadDate, views, category } = req.body;
+    // Check if we're updating with a new thumbnail
+    let updateData = {};
     
-    const updateData = {};
-    if (title !== undefined) updateData.title = title;
-    if (description !== undefined) updateData.description = description;
-    if (customUploadDate !== undefined) updateData.customUploadDate = new Date(customUploadDate);
-    if (views !== undefined) updateData.views = parseInt(views);
-    if (category !== undefined) {
-      updateData.category = category;
+    // Handle text fields
+    if (req.body.title !== undefined) updateData.title = req.body.title;
+    if (req.body.description !== undefined) updateData.description = req.body.description;
+    if (req.body.customUploadDate !== undefined) updateData.customUploadDate = new Date(req.body.customUploadDate);
+    if (req.body.views !== undefined) updateData.views = parseInt(req.body.views);
+    if (req.body.category !== undefined) {
+      updateData.category = req.body.category;
       // Process categories array
-      updateData.categories = category.split(',').map(cat => cat.trim()).filter(cat => cat.length > 0);
+      updateData.categories = req.body.category.split(',').map(cat => cat.trim()).filter(cat => cat.length > 0);
+    }
+    
+    // Handle thumbnail update
+    if (req.file) {
+      // Delete old thumbnail if it's a local file
+      const video = await Video.findById(req.params.id);
+      if (video) {
+        const oldThumbnailPath = path.join(process.cwd(), 'uploads/thumbnails', path.basename(video.thumbnailUrl));
+        if (fs.existsSync(oldThumbnailPath) && !video.thumbnailUrl.startsWith('http')) {
+          try {
+            fs.unlinkSync(oldThumbnailPath);
+            console.log(`Deleted old thumbnail: ${oldThumbnailPath}`);
+          } catch (err) {
+            console.error(`Error deleting old thumbnail: ${oldThumbnailPath}`, err);
+          }
+        }
+        
+        // Update with new thumbnail
+        const newThumbnailUrl = `https://video-backend.cloud/uploads/thumbnails/${req.file.filename}`;
+        updateData.thumbnailUrl = newThumbnailUrl;
+      }
     }
     
     const video = await Video.findByIdAndUpdate(
